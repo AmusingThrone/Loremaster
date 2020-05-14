@@ -163,6 +163,27 @@ class TriviaTask extends EventEmitter {
     }
   }
 
+  async removeCaptcha() {
+    try {
+      fs.unlinkSync(
+        path.join(__dirname, '../captchas', `${this.id}.png`)
+      );
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  async moveCaptcha(state) {
+    try {
+      fs.renameSync(
+        path.join(__dirname, '../captchas', `${this.id}.png`),
+        path.join(__dirname, '../captchas', `${this.id}-${state}.png`),
+      );
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
   async solveCaptcha() {
     try {
       const result = await request({
@@ -178,7 +199,9 @@ class TriviaTask extends EventEmitter {
 
       const data = JSON.parse(result);
       if (data.error) {
-        this.log('Failed to solve captcha. Refreshing...', 'yellowBright');
+        this.log(`Failed to solve captcha. Refreshing...`, 'yellowBright');
+        if (process.env.DEBUG === "true")
+          await this.moveCaptcha("failed");
         await this.getCaptcha();
       } else {
         this.emit('captchaSolution', data.prediction);
@@ -201,9 +224,12 @@ class TriviaTask extends EventEmitter {
       });
       if (result === 'true') {
         this.log('Captcha result is valid!', 'cyanBright');
+        await this.removeCaptcha();
         this.emit('verify', solution);
       } else {
         this.log('Result invalid. Refreshing captcha', 'yellow');
+        if (process.env.DEBUG === "true")
+          await this.moveCaptcha(solution);
         await this.getCaptcha();
       }
     } catch (error) {}
