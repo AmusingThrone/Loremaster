@@ -34,5 +34,8 @@ async function solveCaptcha() {
       console.log("This API Key is valid!")
   }
 }
-
+if (!api_key) {
+  console.log("Couldn't find your api key. Make sure you have a filed that is just .env!");
+  process.exit(0);
+}
 getCaptcha().then(solveCaptcha());
