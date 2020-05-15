@@ -1,4 +1,4 @@
-require('dotenv').config()
+const config = require('dotenv').config()
 const request = require('./util/request.js');
 const fs = require('fs');
 const path = require('path');
@@ -17,13 +17,23 @@ async function getCaptcha() {
   );
 }
 
+async function removeCaptcha() {
+  try {
+    fs.unlinkSync(
+      path.join(__dirname, '../captchas', `test.png`)
+    );
+  } catch (error) {
+    return Promise.reject(error);
+  }
+}
+
 async function solveCaptcha() {
   const result = await request({
       method: 'POST',
       url: 'https://api.amusingthrone.com/wizard101/v2/captcha',
       formData: {
           key: api_key,
-          img: fs.createReadStream(path.join(__dirname, 'captchas', `test.png`)),
+          img: fs.createReadStream(path.join(__dirname, './captchas', `test.png`)),
       },
   });
 
@@ -35,4 +45,15 @@ async function solveCaptcha() {
   }
 }
 
-getCaptcha().then(solveCaptcha());
+async function main() {
+  await getCaptcha();
+  await solveCaptcha();
+}
+
+if (config.error) {
+  console.log(`ENV Error: Do you have a .env file? ${config.error}`);
+} else if (!api_key) {
+  console.log(`ENV Error: Have you set CAPTCHA_API_KEY variable in .env?`);
+} else {
+  main();
+}

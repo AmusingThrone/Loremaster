@@ -5,6 +5,7 @@ const chalk = require('chalk');
 const fs = require('fs');
 const path = require('path');
 const EventEmitter = require('events').EventEmitter;
+const debug = process.env.DEBUG;
 
 class TriviaTask extends EventEmitter {
   constructor(slug, username, password, api_key) {
@@ -200,7 +201,7 @@ class TriviaTask extends EventEmitter {
       const data = JSON.parse(result);
       if (data.error) {
         this.log(`Failed to solve captcha. Refreshing...`, 'yellowBright');
-        if (process.env.DEBUG === "true")
+        if (debug === "true")
           await this.moveCaptcha("failed");
         await this.getCaptcha();
       } else {
@@ -228,7 +229,7 @@ class TriviaTask extends EventEmitter {
         this.emit('verify', solution);
       } else {
         this.log('Result invalid. Refreshing captcha', 'yellow');
-        if (process.env.DEBUG === "true")
+        if (debug === "true")
           await this.moveCaptcha(solution);
         await this.getCaptcha();
       }
